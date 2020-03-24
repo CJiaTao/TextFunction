@@ -36,6 +36,7 @@ public class DownloadTask {
     public DownloadTask(Context context, FileInfo fileInfo) {
         this.context = context;
         this.fileInfo = fileInfo;
+
         this.daoManager = new DaoManager().init(context);
         DaoSession daoSession = daoManager.getDaoSession();
         this.dao = daoSession.getThreadInfoDao();
@@ -64,22 +65,28 @@ public class DownloadTask {
 
         @Override
         public void run() {
-            //向数据库插入线程任务信息
-            if (dao.queryBuilder().where(
-                    ThreadInfoDao.Properties.Id.eq(threadInfo.getId()),
-                    ThreadInfoDao.Properties.Url.eq(threadInfo.getUrl())).count() == 0) {
+            /**
+             * 向数据库插入线程任务信息
+             */
+            if (dao.queryBuilder()
+                    .where(ThreadInfoDao.Properties.Id.eq(threadInfo.getId()), ThreadInfoDao.Properties.Url.eq(threadInfo.getUrl()))
+                    .count() == 0) {
                 //之前不存在该线程任务，添加到数据库中
+                Log.e("查询数据库不存在该记录", threadInfo.toString());
                 dao.insert(threadInfo);
             }
 
             RandomAccessFile raf = null;
             InputStream inputStream = null;
             try {
-                Intent intent=new Intent(DownloadService.ACTION_UPDATA);
+                /**
+                 * 意图 发送广播 实现接收并更新进度
+                 */
+                Intent intent = new Intent(DownloadService.ACTION_UPDATA);
                 //设置文件写入位置，同时判断手机中是否存在该文件
                 file = new File(DownloadService.DOWNLOAD_PATH, fileInfo.getFileName());
 
-                if (file.length() == fileInfo.getLength()) {
+                if (file.length() == fileInfo.getLength()) {    //判断文件大小  是否等于下载文件大小
                     //已经有这个文件了
                     //下载完成之后发送广播
                     intent.putExtra("finished", 100 + "");
@@ -105,12 +112,14 @@ public class DownloadTask {
                 Response response = call.execute();
                 //连接服务器成功
                 ResponseBody body = response.body();
-                Log.e("TAG", "文件大小：" + body.contentLength());
+//                Log.e("TAG", "文件大小：" + body.contentLength());
                 //开始断点续传
                 inputStream = body.byteStream();
-                byte[] bytes = new byte[1024];
+//                byte[] bytes = new byte[1024];
+                byte[] bytes = new byte[1024 * 1024 * 10];
                 int len;
                 long time = System.currentTimeMillis();
+                Log.e("TAG", "下载文件信息：" + fileInfo.toString());
                 while ((len = inputStream.read(bytes)) != -1) {
                     //写入文件
                     raf.write(bytes, 0, len);
@@ -123,11 +132,11 @@ public class DownloadTask {
                     }
                     //下载暂停保存下载进度
                     if (isPause) {
-                        threadInfo.setState(3);
+                        threadInfo.setState(2);
                         dao.update(threadInfo);
                         return;
                     }
-                    Log.e("TAG", "已下载字节：" + file.length());
+//                    Log.e("TAG", "已下载字节：" + file.length());
                 }
                 //下载完成之后发送广播
                 intent.putExtra("finished", 100 + "");
@@ -139,6 +148,7 @@ public class DownloadTask {
                 Log.e("TAG", "文件下载完毕：" + raf.getFilePointer());
 
             } catch (Exception e) {
+                Log.e("111", e.getMessage());
                 e.printStackTrace();
                 isPause = true;
                 threadInfo.setState(2);

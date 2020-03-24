@@ -43,7 +43,7 @@ public class DownloadService extends Service {
             switch (msg.what) {
                 case MSG_INIT:
                     FileInfo fileInfo = (FileInfo) msg.obj;
-                    Log.e("DownloadService", "MSG_INIT:" + fileInfo);
+//                    Log.e("DownloadService", "MSG_INIT:" + fileInfo.toString());
                     //启动下载任务
                     downloadTask = new DownloadTask(DownloadService.this, fileInfo);
                     downloadTask.download();
@@ -93,13 +93,11 @@ public class DownloadService extends Service {
                         .build();
                 Call call = client.newCall(request);
                 Response response = call.execute();
-
                 long length = -1;
                 if (response.code() == 200) {
                     //连接服务器成功
                     ResponseBody body = response.body();
                     length = body.contentLength();
-                    Log.e("TAG", "文件大小：" + body.contentLength());
                 }
                 File dir = new File(DOWNLOAD_PATH);
                 if (!dir.exists()) {
@@ -110,6 +108,7 @@ public class DownloadService extends Service {
                 message.sendToTarget();
 
             } catch (IOException e) {
+                Log.e("111",e.getMessage());
                 e.printStackTrace();
             }
         }

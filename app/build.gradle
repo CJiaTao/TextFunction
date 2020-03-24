@@ -26,7 +26,7 @@ android {
     }
 }
 
-greendao{
+greendao {
     //数据库版本号
     schemaVersion 1
 
@@ -60,5 +60,5 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:4.4.0"
 
     implementation 'org.greenrobot:greendao:3.2.2' // add library
-}
 
+}

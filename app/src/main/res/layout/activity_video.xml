@@ -3,11 +3,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    android:orientation="vertical"
+    tools:context=".videoBitmap.VideoActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/horizontalView"
+    <Button
+        android:id="@+id/btnVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="获取视频文件"/>
+
+    <TextView
+        android:id="@+id/tvVideo"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:text="文件地址："
+        android:textSize="16sp"/>
+
+    <ImageView
+        android:id="@+id/ivVideo"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center_horizontal"/>
 
 </LinearLayout>

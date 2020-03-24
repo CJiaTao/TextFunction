@@ -3,6 +3,17 @@ package com.example.textfunction.downLoad.entity;
 import java.io.Serializable;
 
 public class FileInfo implements Serializable {
+
+    @Override
+    public String toString() {
+        return "FileInfo{" +
+                "id=" + id +
+                ", url='" + url + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", length=" + length +
+                '}';
+    }
+
     private long id;
     private String url;
     private String fileName;

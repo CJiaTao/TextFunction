@@ -99,7 +99,8 @@ public class TaskListActivity extends AppCompatActivity implements TaskListAdapt
         public void onReceive(Context context, Intent intent) {
             if (DownloadService.ACTION_UPDATA.equals(intent.getAction())) {
                 String finishedstr = intent.getStringExtra("finished");
-                int fileId = intent.getIntExtra("fileId", 0);
+                long fileId = intent.getLongExtra("fileId", 0);
+
                 taskListAdapter.updateProgress(fileId, Integer.valueOf(finishedstr));
             } else if (DownloadService.ACTION_ERRO.equals(intent.getAction())) {
                 Log.d("TaskListActivity", "456");
@@ -125,9 +126,9 @@ public class TaskListActivity extends AppCompatActivity implements TaskListAdapt
     public void onListButtonStart(ThreadInfo threadInfo) {
         Intent intent = new Intent(this, DownloadService.class);
         FileInfo fileInfo = new FileInfo();
-        fileInfo.setFileName(threadInfo.getTitle());
         fileInfo.setId(threadInfo.getId());
         fileInfo.setUrl(threadInfo.getUrl());
+        fileInfo.setFileName(threadInfo.getTitle());
         intent.putExtra("fileInfo", fileInfo);
         intent.setAction(DownloadService.ACTION_START);
         startService(intent);

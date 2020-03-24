@@ -1,60 +1,68 @@
-package com.example.textfunction.downLoad.activity;
-
-import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.provider.Settings;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
+package com.example.textfunction.videoBitmap;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.example.textfunction.R;
-import com.example.textfunction.downLoad.DaoManager;
-import com.example.textfunction.videoBitmap.UsualUtil;
-import com.example.textfunction.videoBitmap.VideoActivity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-
-
-    private Button btn_filelilst;
-    private Button btn_tasklilst;
+public class VideoActivity extends AppCompatActivity {
+    @BindView(R.id.btnVideo)
+    Button btnVideo;
+    @BindView(R.id.tvVideo)
+    TextView tvVideo;
+    @BindView(R.id.ivVideo)
+    ImageView ivVideo;
 
     private static final int REQUEST_PERMISSION = 1;
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
+    private static final int GET_FILE = 5;
     private AlertDialog alertDialog;
     private AlertDialog mDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_down_main);
-        initView();
-        setAndroidNativeLightStatusBar(this, true);
-
-        DaoManager.getInstance().init(this).getDaoMaster();
+        setContentView(R.layout.activity_video);
+        ButterKnife.bind(this);
 
         myRequetPermission();
     }
 
     private void myRequetPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
-                    REQUEST_PERMISSION);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
         } else {
             Toast.makeText(this, "您已经申请了权限!", Toast.LENGTH_SHORT).show();
         }
@@ -99,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         if (alertDialog != null && alertDialog.isShowing()) {
                                             alertDialog.dismiss();
                                         }
-                                        ActivityCompat.requestPermissions(MainActivity.this,
+                                        ActivityCompat.requestPermissions(VideoActivity.this,
                                                 new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
                                     }
                                 });
@@ -119,40 +127,84 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == NOT_NOTICE) {
             myRequetPermission();//由于不知道是否选择了允许所以需要再次判断
+        } else if (requestCode == GET_FILE) {
+            if (resultCode != 0) {
+                String filePath = UsualUtil.getPath(this, data.getData());
+                File uploadFile = new File(filePath);
+                Long size = uploadFile.length();
+                String name = uploadFile.getName();
+
+                tvVideo.setText(uploadFile.getAbsolutePath());
+                getVideoBitmap(uploadFile);
+            }
         }
     }
 
-
-    //设置状态栏字体颜色
-    private static void setAndroidNativeLightStatusBar(Activity activity, boolean dark) {
-        View decor = activity.getWindow().getDecorView();
-        if (dark) {
-            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        } else {
-            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        }
-    }
-
-    private void initView() {
-        btn_filelilst = (Button) findViewById(R.id.btn_filelilst);
-        btn_tasklilst = (Button) findViewById(R.id.btn_tasklilst);
-
-        btn_filelilst.setOnClickListener(this);
-        btn_tasklilst.setOnClickListener(this);
-    }
-
-    @Override
-    public void onClick(View v) {
-        Intent intent = new Intent();
-        switch (v.getId()) {
-            case R.id.btn_filelilst:
-                intent.setClass(this, FileListActivity.class);
-                startActivity(intent);
-                break;
-            case R.id.btn_tasklilst:
-                intent.setClass(this, TaskListActivity.class);
-                startActivity(intent);
+    @OnClick({R.id.btnVideo})
+    public void OnClick(View view) {
+        switch (view.getId()) {
+            case R.id.btnVideo:
+                getVideo();
                 break;
         }
+    }
+
+    private void getVideo() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        startActivityForResult(intent, GET_FILE);
+    }
+
+    public void getVideoBitmap(File file) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(file.getAbsolutePath());
+        // 取得视频的长度(单位为毫秒)
+        String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        Log.e("该视频的长度", time);
+        // 取得视频的长度(单位为秒)
+        int seconds = Integer.valueOf(time) / 1000;
+        int current = seconds / 2;
+        Log.e("视频长度", seconds + "");
+        Bitmap bitmap = retriever.getFrameAtTime(current * 1000 * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+        ivVideo.setImageBitmap(bitmap);
+
+        String name=file.getName();
+        saveImage(this,bitmap,name);
+    }
+
+    private void saveImage(Context context, Bitmap bitmap, String fileName) {
+        //此处范围的所谓外部存储是手机的自带内存32G,64G，并不是SD卡，是否有访问权限
+
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+
+            File sdFile = this.getExternalCacheDir();
+            File newFileDir = new File(sdFile, "/img");
+            try {
+                if (!newFileDir.exists())
+                    newFileDir.mkdir();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+//            File file = new File(newFileDir, System.currentTimeMillis() + ".jpg");
+            File file = new File(newFileDir, fileName + ".jpg");
+
+            Log.e("TAG", "根目录里面的所有目录：" + newFileDir.exists());
+
+            //打开文件输出流
+            FileOutputStream os = null;
+            try {
+                os = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+                os.flush();
+                os.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
     }
 }

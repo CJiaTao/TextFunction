@@ -1,6 +1,7 @@
 package com.example.textfunction.downLoad.adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +28,7 @@ public class TaskListAdapter extends BaseAdapter {
     private List<Integer> progressList;
 
 
-    public void setFileInfoList(Context context, List<ThreadInfo> threadInfos, List<Integer> progressList , ItemButtonListener itemButtonListener) {
+    public void setFileInfoList(Context context, List<ThreadInfo> threadInfos, List<Integer> progressList, ItemButtonListener itemButtonListener) {
         this.context = context;
         this.threadInfos = threadInfos;
         this.itemButtonListener = itemButtonListener;
@@ -117,14 +118,16 @@ public class TaskListAdapter extends BaseAdapter {
     }
 
     //更新列表行中的进度条
-    public void updateProgress(int id, int progress) {
+    public void updateProgress(long id, int progress) {
         for (int i = 0; i < threadInfos.size(); i++) {
+            Log.e("TAG", "集合中第" + i + "项 数据内容：" + threadInfos.get(i).toString());
             if (threadInfos.get(i).getId() == id) {
-                progressList.set(i,progress);
+                Log.e("更改下载进度", threadInfos.get(i).getId() + " ; " + progress);
+                progressList.set(i, progress);
                 if (progress == 100) {
                     threadInfos.get(i).setState(3);
                 }
-                notifyDataSetChanged();
+//                notifyDataSetChanged();
             }
         }
     }
